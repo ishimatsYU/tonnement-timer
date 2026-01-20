@@ -1,20 +1,17 @@
 
 // js/main.js
-// メイン画面（index.html）側：表示専用。localStorage の内容を購読して反映する。
 class MainDisplay {
   constructor() {
-    this.timer = new TournamentTimer(); // 表示用。start/stop はしない
+    this.timer = new TournamentTimer(); // 表示専用
     this._bindElements();
     this._wireEvents();
-    this._renderAll(); // 初期描画
-    // 1秒ごとに描画（残り時間の表示更新）
+    this._renderAll();
+
     setInterval(() => this._renderTimerOnly(), 1000);
-    // 5秒ごとに全体再読込（保険）
     setInterval(() => { this.timer.loadData(); this._renderAll(); }, 5000);
   }
 
   _bindElements() {
-    // 基本（index.html の ID に合わせて取得）
     this.tournamentNameEl = document.getElementById('tournament-name');
     this.timerTextEl = document.getElementById('current-time');
     this.currentLevelEl = document.getElementById('current-level');
@@ -31,22 +28,22 @@ class MainDisplay {
     this.averageStackEl = document.getElementById('average-stack-value');
     this.currentPlayersEl = document.getElementById('current-players');
     this.totalEntriesEl = document.getElementById('total-entries');
+
+    this.breakBannerEl = document.getElementById('break-indicator'); // ★ 固定バナー
   }
 
   _wireEvents() {
-    // 別タブ（管理画面）から storage が更新されたら即反映
     window.addEventListener('storage', (e) => {
       if (e.key === 'tournamentTimer' || e.key === 'tournamentData') {
         this.timer.loadData();
         this._renderAll();
       }
     });
-
-    // レベル変更・残り時間のコールバック（描画更新）
     this.timer.onLevelChange = () => {
       this._renderLevelInfo();
       this._renderTimerOnly();
       this._renderTheme();
+      this._toggleBreakBanner();
     };
     this.timer.onTimeUpdate = () => this._renderTimerOnly();
   }
@@ -57,6 +54,7 @@ class MainDisplay {
     this._renderLevelInfo();
     this._renderRightPanel();
     this._renderTheme();
+    this._toggleBreakBanner();
   }
 
   _renderTournamentInfo() {
@@ -65,12 +63,16 @@ class MainDisplay {
   }
 
   _renderTimerOnly() {
-    // 表示専用なので、毎回最新の localStorage を読んでから描画
     this.timer.loadData();
     this.timerTextEl.textContent = this.timer.getFormattedTime();
 
-    // 1分未満で色変更
-    this.timerTextEl.style.color = this.timer.isUnderOneMinute() ? '#FFD700' : '#FFFFFF';
+    if (this.timer.isBreak) {
+      this.timerTextEl.style.color = '#FF3B30'; // 赤
+    } else if (this.timer.isUnderOneMinute()) {
+      this.timerTextEl.style.color = '#FFD700'; // 黄
+    } else {
+      this.timerTextEl.style.color = '#FFFFFF'; // 白
+    }
   }
 
   _renderLevelInfo() {
@@ -105,8 +107,6 @@ class MainDisplay {
 
   _renderRightPanel() {
     const data = this._loadTournamentData();
-
-    // REWARD
     this.rewardListEl.innerHTML = '';
     const rewards = Array.isArray(data.rewards) ? data.rewards : [];
     rewards.forEach((reward, idx) => {
@@ -119,24 +119,27 @@ class MainDisplay {
       this.rewardListEl.appendChild(div);
     });
 
-    // 平均スタック
+    // 平均スタック = 初期スタック × 受付人数 ÷ 現在参加人数
     const currentPlayers = Number.isFinite(+data.currentPlayers) ? +data.currentPlayers : 0;
-    const totalEntries = Number.isFinite(+data.totalEntries) ? +data.totalEntries : 0;
-    const initialStack  = Number.isFinite(+data.initialStack) ? +data.initialStack : 10000;
-
+    const totalEntries  = Number.isFinite(+data.totalEntries)  ? +data.totalEntries  : 0;
+    const initialStack  = Number.isFinite(+data.initialStack)  ? +data.initialStack  : 10000;
     const totalChips = initialStack * totalEntries;
     const avg = currentPlayers > 0 ? Math.floor(totalChips / currentPlayers) : 0;
     this.averageStackEl.textContent = avg.toLocaleString();
 
-    // 人数表示
     this.currentPlayersEl.textContent = currentPlayers || 0;
-    this.totalEntriesEl.textContent = totalEntries || 0;
+    this.totalEntriesEl.textContent   = totalEntries  || 0;
   }
 
   _renderTheme() {
     document.body.style.backgroundColor = this.timer.isBreak
       ? this.timer.settings.breakColor
       : this.timer.settings.normalColor;
+  }
+
+  _toggleBreakBanner() {
+    if (!this.breakBannerEl) return;
+    this.breakBannerEl.style.display = this.timer.isBreak ? 'block' : 'none';
   }
 
   _loadTournamentData() {
@@ -146,6 +149,4 @@ class MainDisplay {
   }
 }
 
-// ページ起動
 document.addEventListener('DOMContentLoaded', () => new MainDisplay());
-``
