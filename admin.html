@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>ポーカートーナメント管理画面</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div class="admin-container">
+    <header class="admin-header">
+      <h1>トーナメント管理画面</h1>
+    </header>
+
+    <main class="admin-main">
+      <!-- 基本情報 -->
+      <section class="basic-settings">
+        <h2>基本情報</h2>
+        <div class="form-group">
+          <label for="tournament-name-input">トーナメント名:</label>
+          <input type="text" id="tournament-name-input" placeholder="トーナメント名を入力" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="current-players-input">現在参加人数:</label>
+            <input type="number" id="current-players-input" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="total-entries-input">受付人数（エントリー+リエントリー）:</label>
+            <input type="number" id="total-entries-input" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="initial-stack-input">初期スタック:</label>
+            <input type="number" id="initial-stack-input" min="0" value="10000" />
+          </div>
+        </div>
+      </section>
+
+      <!-- プライズプール -->
+      <section class="prize-pool-section">
+        <h2>プライズプール</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="entry-fee-input">参加費（円）:</label>
+            <input type="number" id="entry-fee-input" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>プライズプール:</label>
+            <div id="prize-pool-display" class="prize-pool-display">0円</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- タイマー管理 -->
+      <section class="timer-management">
+        <h2>タイマー管理</h2>
+
+        <div class="timer-selector">
+          <label for="timer-select">使用するタイマー:</label>
+          <select id="timer-select"></select>
+          <button id="new-timer-btn" class="btn btn-primary">新規タイマー作成</button>
+        </div>
+
+        <div id="timer-details" class="timer-details">
+          <div class="form-group">
+            <label for="timer-name-input">タイマー名:</label>
+            <input type="text" id="timer-name-input" placeholder="タイマー名を入力" />
+          </div>
+
+          <div class="levels-container">
+            <h3>レベル設定</h3>
+            <div id="levels-list" class="levels-list"></div>
+            <button id="add-level-btn" class="btn btn-secondary">レベル追加</button>
+          </div>
+
+          <div class="breaks-container">
+            <h3>ブレイク設定</h3>
+
+            <!-- ★ ブレイク追加UI -->
+            <div class="form-row" style="margin-bottom:10px;">
+              <div class="form-group">
+                <label for="break-level-select">どのレベルの「後」にブレイク:</label>
+                <select id="break-level-select"></select>
+              </div>
+              <div class="form-group">
+                <label for="break-duration-input">休憩時間（分）:</label>
+                <input type="number" id="break-duration-input" min="1" value="10" />
+              </div>
+              <div class="form-group" style="align-self:flex-end;">
+                <button id="add-break-btn" class="btn btn-secondary">ブレイク追加</button>
+              </div>
+            </div>
+
+            <div id="breaks-list" class="breaks-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- プライズ設定 -->
+      <section class="prize-settings">
+        <h2>プライズ設定</h2>
+        <div id="prize-list-admin" class="prize-list-admin"></div>
+        <button id="add-prize-btn" class="btn btn-secondary">プライズ追加</button>
+      </section>
+
+      <!-- コントロール -->
+      <section class="control-section">
+        <div class="timer-controls">
+          <button id="prev-level-btn" class="btn btn-secondary">前のレベル</button>
+          <button id="start-stop-btn" class="btn btn-primary">スタート</button>
+          <button id="next-level-btn" class="btn btn-secondary">次のレベル</button>
+          <button id="break-cut-btn" class="btn btn-warning">ブレイクカット</button>
+        </div>
+        <button id="update-btn" class="btn btn-success btn-large">更新</button>
+
+        <div class="admin-controls">
+          <button id="save-btn" class="btn btn-info">保存</button>
+          <button id="reset-timer-btn" class="btn btn-warning">タイマーリセット</button>
+          <!-- ★ 全データ初期化 -->
+          <button id="wipe-data-btn" class="btn btn-danger">全データ初期化</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  
+
+  <script src="js/timer.js" defer></script>
+  <script src="js/admin.js" defer></script>
+</body>
+</html>
+``

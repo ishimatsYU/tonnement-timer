@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>ポーカートーナメントタイマー</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Break バナーの最低限の見た目（style.css が無くても見えるように） */
+    #break-indicator {
+      display: none;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #FF3B30; /* 赤 */
+      margin-bottom: .25em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 左8割：メインタイマー表示エリア -->
+    <main class="main-timer-area">
+      <header class="tournament-header">
+        <h1 id="tournament-name">トーナメント名</h1>
+      </header>
+
+      <div class="timer-display">
+        <!-- ★ ブレイク中のみ表示 -->
+        <div id="break-indicator">Break</div>
+
+        <div id="current-time" class="timer-text">00:00</div>
+      </div>
+
+      <div class="current-level-info">
+        <div id="current-level" class="level-text">Level 1</div>
+        <div id="current-blinds" class="blinds-text">
+          SB: <span id="current-sb">0</span> ／
+          BB: <span id="current-bb">0</span> ／
+          ANTE: <span id="current-ante">0</span>
+        </div>
+      </div>
+
+      <div class="next-level-info">
+        <div class="next-level-header">NEXT LEVEL</div>
+        <div id="next-blinds" class="next-blinds-text">
+          SB: <span id="next-sb">0</span> ／
+          BB: <span id="next-bb">0</span> ／
+          ANTE: <span id="next-ante">0</span>
+        </div>
+        <div id="next-break" class="next-break-text">次のブレイク: --分後</div>
+      </div>
+    </main>
+
+    <!-- 右2割：情報パネル -->
+    <aside class="info-panel">
+      <section class="reward-section">
+        <h2>REWARD</h2>
+        <div id="reward-list" class="reward-list"></div>
+      </section>
+
+      <section class="stats-section-bottom">
+        <div class="average-stack">
+          <h3>アベレージスタック</h3>
+          <div id="average-stack-value" class="stack-value">0</div>
+        </div>
+        <div class="player-count">
+          <h3>Players</h3>
+          <div id="player-ratio" class="player-ratio">
+            <span id="current-players">0</span> / <span id="total-entries">0</span>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="admin-link">
+    <a href="admin.html" target="_blank">管理画面</a>
+  </div>
+
+  <script src="js/timer.js" defer></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>
+``
