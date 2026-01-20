@@ -1,21 +1,17 @@
 
 // js/timer.js
-// テキサスホールデム用トーナメントタイマー（コアロジック）
 class TournamentTimer {
   constructor() {
-    // 状態
     this.timers = [];
     this.currentTimerIndex = 0;
     this.currentLevelIndex = 0;
-    this.timeRemaining = 0; // 秒
+    this.timeRemaining = 0; // sec
     this.isRunning = false;
     this.isBreak = false;
 
-    // コールバック
-    this.onTimeUpdate = null;   // (remainingSeconds) => void
-    this.onLevelChange = null;  // (levelIndex, isBreak) => void
+    this.onTimeUpdate = null;
+    this.onLevelChange = null;
 
-    // 設定（色は表示側で使用）
     this.settings = {
       oneMinuteWarning: true,
       levelChangeSound: true,
@@ -23,15 +19,13 @@ class TournamentTimer {
       normalColor: '#87CEEB',
     };
 
-    // 内部
     this._intervalId = null;
-    this._audioCtx = null;   // ユーザー操作後に生成
-    this._lastSavedJson = ''; // 書き込み節約
+    this._audioCtx = null;
+    this._lastSavedJson = '';
 
-    // データ読込（無ければ初期データ）
     this.loadData();
     if (!Array.isArray(this.timers) || this.timers.length === 0) {
-      this._createDefaultTimer(); // Level1: 1/2/2、以後2倍
+      this._createDefaultTimer(); // Level1: SB1/BB2/ANTE2 → 以後2倍
       this.currentTimerIndex = 0;
       this.currentLevelIndex = 0;
       this.timeRemaining = this.timers[0].levels[0].duration * 60;
@@ -41,7 +35,6 @@ class TournamentTimer {
     }
   }
 
-  // ===== 永続化 =====
   _persist() {
     const data = {
       timers: this.timers,
@@ -69,8 +62,8 @@ class TournamentTimer {
       this.currentTimerIndex = Number.isInteger(data.currentTimerIndex) ? data.currentTimerIndex : 0;
       this.currentLevelIndex = Number.isInteger(data.currentLevelIndex) ? data.currentLevelIndex : 0;
       this.timeRemaining = Number.isFinite(data.timeRemaining) ? data.timeRemaining : 0;
-      this.isBreak = !!(data.isBreak);
-      this.isRunning = !!(data.isRunning);
+      this.isBreak = !!data.isBreak;
+      this.isRunning = !!data.isRunning;
       this.settings = { ...this.settings, ...(data.settings || {}) };
       this._lastSavedJson = saved;
     } catch {
@@ -78,32 +71,24 @@ class TournamentTimer {
     }
   }
 
-  // ===== タイマー定義 =====
   _createDefaultTimer() {
-    // Level1 を SB=1 / BB=2 / ANTE=2 とし、以後は2倍ずつ（デモ用に 2分 × 8レベル）
     const levels = [];
     let sb = 1, bb = 2, ante = 2;
     for (let i = 0; i < 8; i += 1) {
-      levels.push({ duration: 2, sb, bb, ante });
+      levels.push({ duration: 2, sb, bb, ante }); // デモは各2分
       sb *= 2; bb *= 2; ante *= 2;
     }
-
     const defaultTimer = {
       id: 'default',
       name: 'デモタイマー',
       levels,
-      // breaks: level は「そのレベルが終わった “後” にブレイク」を意味する 0-based index
-      breaks: [
-        { level: 1, duration: 1 }, // Level2 の後に 1 分休憩
-      ],
+      // level は「このレベルの“後”にブレイク」(0-based)
+      breaks: [{ level: 1, duration: 1 }], // Level2 の後に 1 分
     };
     this.timers = [defaultTimer];
   }
 
-  addTimer(timer) {
-    this.timers.push(timer);
-    this._persist();
-  }
+  addTimer(timer) { this.timers.push(timer); this._persist(); }
 
   selectTimer(index) {
     if (index < 0 || index >= this.timers.length) return;
@@ -116,18 +101,16 @@ class TournamentTimer {
     this._persist();
   }
 
-  // ===== 現在参照 =====
   getCurrentTimer() { return this.timers[this.currentTimerIndex]; }
   getCurrentLevel() {
-    const t = this.getCurrentTimer(); if (!t) return null;
-    return t.levels[this.currentLevelIndex] || null;
+    const t = this.getCurrentTimer();
+    return t ? (t.levels[this.currentLevelIndex] || null) : null;
   }
   getNextLevel() {
-    const t = this.getCurrentTimer(); if (!t) return null;
-    return t.levels[this.currentLevelIndex + 1] || null;
+    const t = this.getCurrentTimer();
+    return t ? (t.levels[this.currentLevelIndex + 1] || null) : null;
   }
 
-  // ===== 操作 =====
   start() {
     if (this.isRunning) return;
     if (!this.getCurrentTimer()) return;
@@ -155,9 +138,7 @@ class TournamentTimer {
   }
 
   prevLevel() {
-    // ブレイク中は直前のレベルに戻すのではなく、ブレイク解除＋そのレベルに戻す仕様でもOKだが
-    // ここでは単純にひとつ前のレベルへ（ブレイク解除）
-    if (this.currentLevelIndex <= 0) { return; }
+    if (this.currentLevelIndex <= 0) return;
     this.currentLevelIndex -= 1;
     this.isBreak = false;
     const lv = this.getCurrentLevel();
@@ -170,10 +151,10 @@ class TournamentTimer {
     const t = this.getCurrentTimer();
     if (!t) { this.stop(); return; }
 
-    // もし今がブレイク中なら、ブレイク終了 → 次レベル開始
+    // ブレイク中 → ブレイク終了で次レベル開始
     if (this.isBreak) {
       this.isBreak = false;
-      this.currentLevelIndex += 1; // ここで初めて次レベルへ進む
+      this.currentLevelIndex += 1;
       const lv = this.getCurrentLevel();
       this.timeRemaining = lv ? lv.duration * 60 : 0;
       this._emitLevelChange();
@@ -181,8 +162,9 @@ class TournamentTimer {
       return;
     }
 
-    // レベルの終了。最終レベルなら停止
+    // レベル終了：ブレイクがあれば突入、無ければ次レベル／最終なら停止
     if (this.currentLevelIndex >= t.levels.length - 1) {
+      // 最終レベル終了 → 停止
       this.stop();
       this.isBreak = false;
       this.timeRemaining = 0;
@@ -191,18 +173,16 @@ class TournamentTimer {
       return;
     }
 
-    // このレベルの “後” にブレイクがあるか
     const curLevelIndex = this.currentLevelIndex;
     const bp = (t.breaks || []).find(b => b.level === curLevelIndex);
-
     if (bp) {
-      // ブレイク突入（レベルは進めない）
+      // ブレイクに突入（レベルは進めない）
       this.isBreak = true;
       this.timeRemaining = bp.duration * 60;
       this._emitLevelChange();
       this._persist();
     } else {
-      // そのまま次レベルへ
+      // 次のレベルへ
       this.currentLevelIndex += 1;
       const lv = this.getCurrentLevel();
       this.isBreak = false;
@@ -218,12 +198,11 @@ class TournamentTimer {
     if (this.timeRemaining > 0) {
       this.timeRemaining -= 1;
 
-      // 残り3/2/1秒で「ピッ」
+      // 3,2,1 で短いビープ
       if ([3, 2, 1].includes(this.timeRemaining)) {
         this._playSound('beep');
       }
-
-      // 残り60秒で警告音（設定有効時）
+      // 1分前通知
       if (this.settings.oneMinuteWarning && this.timeRemaining === 60) {
         this._playSound('warning');
       }
@@ -233,15 +212,11 @@ class TournamentTimer {
       return;
     }
 
-    // 0秒：最後の「ピー」（長め）
-    if (this.settings.levelChangeSound) {
-      this._playSound('final');
-    }
-    // 次へ（ブレイク or 次レベル or 停止）
+    // 0秒：長すぎない最終ビープ（テンポを上げる）
+    if (this.settings.levelChangeSound) this._playSound('final');
     this.nextLevel();
   }
 
-  // ===== サウンド =====
   async _ensureAudio() {
     if (!this._audioCtx) {
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -260,25 +235,25 @@ class TournamentTimer {
       if (!audioContext) return;
 
       if (type === 'beep') {
-        // 短いビープ（ピッ）
+        // ピッ（短くアタック強め）
         const osc = audioContext.createOscillator();
         const gain = audioContext.createGain();
         osc.connect(gain); gain.connect(audioContext.destination);
         osc.type = 'square';
-        osc.frequency.setValueAtTime(1000, audioContext.currentTime);
-        gain.gain.setValueAtTime(0.25, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.12);
-        osc.start(); osc.stop(audioContext.currentTime + 0.12);
+        osc.frequency.setValueAtTime(1050, audioContext.currentTime);
+        gain.gain.setValueAtTime(0.28, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.10);
+        osc.start(); osc.stop(audioContext.currentTime + 0.10);
       } else if (type === 'final') {
-        // 長いビープ（ピー）
+        // ピー（短め0.45sでテンポ感UP）
         const osc = audioContext.createOscillator();
         const gain = audioContext.createGain();
         osc.connect(gain); gain.connect(audioContext.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(900, audioContext.currentTime);
-        gain.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
-        osc.start(); osc.stop(audioContext.currentTime + 0.8);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(920, audioContext.currentTime);
+        gain.gain.setValueAtTime(0.30, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.45);
+        osc.start(); osc.stop(audioContext.currentTime + 0.45);
       } else if (type === 'warning') {
         // 1分前の軽い通知
         const osc = audioContext.createOscillator();
@@ -290,31 +265,28 @@ class TournamentTimer {
         gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
         osc.start(); osc.stop(audioContext.currentTime + 0.25);
       }
-    } catch {
-      // 音は失敗しても致命ではない
-    }
+    } catch { /* no-op */ }
   }
 
-  // ===== 表示用ユーティリティ =====
   getNextBreakTime() {
     const t = this.getCurrentTimer();
     if (!t) return null;
 
+    // 現在がブレイク中 → このブレイク終了後から次のブレイクを探す
     let minutes = 0;
-    // 現在がブレイク中なら、このブレイク終了後から次のブレイクを探す
-    let startLevelIndex = this.currentLevelIndex;
-    let remainingAtStart = Math.ceil(this.timeRemaining / 60);
+    let startIndex = this.currentLevelIndex;
     if (this.isBreak) {
-      // ブレイク後に開始するレベルが currentLevelIndex+1
-      startLevelIndex = this.currentLevelIndex + 1;
-      remainingAtStart = 0; // ブレイク中は「次のブレイク」までの分数には含めない想定
+      // ブレイク時間は含めない（「次のブレイクまでのレベル経過時間」）
+      startIndex = this.currentLevelIndex + 1;
+    } else {
+      minutes += Math.ceil(this.timeRemaining / 60);
     }
 
-    minutes += remainingAtStart;
-    for (let i = startLevelIndex; i < t.levels.length; i += 1) {
+    for (let i = startIndex; i < t.levels.length; i += 1) {
       const hasBreakAfter = (t.breaks || []).some(b => b.level === i);
-      if (i > startLevelIndex) minutes += t.levels[i].duration;
-      else if (remainingAtStart === 0 && i < t.levels.length) minutes += t.levels[i].duration;
+      if (i > startIndex || (this.isBreak && i === startIndex)) {
+        minutes += t.levels[i].duration;
+      }
       if (hasBreakAfter) return minutes;
     }
     return null;
@@ -335,5 +307,4 @@ class TournamentTimer {
   }
 }
 
-// グローバル公開
 window.TournamentTimer = TournamentTimer;
