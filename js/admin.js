@@ -38,7 +38,11 @@ class AdminPanel {
 
     // ブレイク管理
     this.breaksList    = document.getElementById('breaks-list');
-  
+    
+this.breakLevelSelect   = document.getElementById('break-level-select');
+this.breakDurationInput = document.getElementById('break-duration-input');
+this.breaksList         = document.getElementById('breaks-list');
+
 
     // プライズ設定
     this.prizeListAdmin = document.getElementById('prize-list-admin');
@@ -78,13 +82,18 @@ class AdminPanel {
         this._renderBreakLevelOptions();
       }
     });
-
+  }
+{
     this.newTimerBtn.addEventListener('click', () => this._createNewTimer());
     this.addLevelBtn.addEventListener('click', () => { this._addLevel(); this._renderBreakLevelOptions(); });
     this.addBreakBtn.addEventListener('click', () => this._addBreak());
     this.addPrizeBtn.addEventListener('click', () => this._addPrize());
 
-    this._on(this.addBreakBtn, "click", () => this._promptAddBreak());
+    this._on(this.addBreakBtn, "click", () => this._promptaddBreak());
+
+- this.addBreakBtn.addEventListener('click', () => this._addBreak());
++ this.addBreakBtn && this.addBreakBtn.addEventListener('click', () => this._addBreakFromUI());
+
     this.prevLevelBtn.addEventListener('click', () => { this.timer.prevLevel(); this._renderTimerControls(); });
     this.startStopBtn.addEventListener('click', () => this._toggleTimer());
     this.nextLevelBtn.addEventListener('click', () => { this.timer.nextLevel(); this._renderTimerControls(); });
@@ -226,7 +235,7 @@ class AdminPanel {
 
     // 既存ブレイク一覧
     this._renderBreaksList();
-  }
+  
 
   _renderBreaksList() {
     const t = this.timer.getCurrentTimer();
@@ -269,17 +278,29 @@ class AdminPanel {
     });
   }
 
-  _renderBreakLevelOptions() {
-    const t = this.timer.getCurrentTimer();
-    this.breakLevelSelect.innerHTML = '';
-    if (!t) return;
-    t.levels.forEach((lv, idx) => {
-      const opt = document.createElement('option');
-      opt.value = String(idx);
-      opt.textContent = `Level ${idx + 1} の後`;
-      this.breakLevelSelect.appendChild(opt);
-    });
-  }
+ 
+_renderBreakLevelOptions() {
+  // ① UI要素とデータの存在ガード
+  const t = this.timer.getCurrentTimer && this.timer.getCurrentTimer();
+  if (!this.breakLevelSelect || !t || !Array.isArray(t.levels)) return;
+
+  // ② クリアしてから再構築
+  this.breakLevelSelect.innerHTML = '';
+
+  // ③ レベル数ぶん option を作成
+  t.levels.forEach((_, idx) => {
+    const opt = document.createElement('option');
+    opt.value = String(idx);                  // 0-based（「このレベルの後」）
+    opt.textContent = `Level ${idx + 1} の後`;
+    this.breakLevelSelect.appendChild(opt);
+  });
+
+  // ④ デフォルト選択（現在レベルの“後”を仮選択）
+  const def = Math.min(t.levels.length - 1, Math.max(0, this.timer.currentLevelIndex));
+  this.breakLevelSelect.value = String(def);
+}
+``
+
 
   _renderPrizes() {
     this.prizeListAdmin.innerHTML = '';
@@ -351,48 +372,35 @@ class AdminPanel {
   }
 
  
-// ★ プロンプトでブレイク追加する完全版（HTMLの要素に依存しない）
-_promptAddBreak() {
+
+_addBreakFromUI() {
   const t = this.timer.getCurrentTimer();
   if (!t) return;
+  if (!this.breakLevelSelect || !this.breakDurationInput) return;
 
-  const max = t.levels.length;
+  const afterLevel = parseInt(this.breakLevelSelect.value, 10); // 0-based
+  const minutes    = parseInt(this.breakDurationInput.value, 10);
 
-  // 1) どのレベルの後か？
-  const levelStr = prompt(`どのレベルの「後」にブレイクを入れますか？（1〜${max}）`, "1");
-  if (!levelStr) return;
-  const levelIndex = parseInt(levelStr, 10) - 1;
-  if (isNaN(levelIndex) || levelIndex < 0 || levelIndex >= max) {
-    alert("正しいレベル番号を入力してください");
-    return;
+  if (!Number.isInteger(afterLevel) || afterLevel < 0 || afterLevel >= t.levels.length) {
+    alert('レベル選択が不正です'); return;
+  }
+  if (!Number.isInteger(minutes) || minutes <= 0) {
+    alert('休憩時間（分）は正の整数で入力してください'); return;
   }
 
-  // 2) 休憩時間（分）
-  const durationStr = prompt("ブレイク時間（分）を入力してください", "10");
-  if (!durationStr) return;
-  const minutes = parseInt(durationStr, 10);
-  if (isNaN(minutes) || minutes <= 0) {
-    alert("休憩時間は正の整数で入力してください");
-    return;
-  }
-
-  // 3) 保存
   t.breaks = Array.isArray(t.breaks) ? t.breaks : [];
-  const existedIndex = t.breaks.findIndex(b => b.level === levelIndex);
-  if (existedIndex >= 0) {
-    t.breaks[existedIndex].duration = minutes; // 上書き
-  } else {
-    t.breaks.push({ level: levelIndex, duration: minutes });
-  }
+  const idx = t.breaks.findIndex(b => b.level === afterLevel);
+  if (idx >= 0) t.breaks[idx].duration = minutes;
+  else t.breaks.push({ level: afterLevel, duration: minutes });
 
   t.breaks.sort((a, b) => a.level - b.level);
   this.timer._persist();
 
-  alert(`Level ${levelIndex + 1} の後に ${minutes}分 のブレイクを設定しました！`);
-
-  // UI反映（breaks-list がある場合）
+  // 画面の一覧があるときだけ描画更新
   if (this.breaksList) this._renderBreaksList();
+  alert(`Level ${afterLevel + 1} の後に ${minutes} 分のブレイクを設定しました。`);
 }
+
 
 
   _addPrize() {
