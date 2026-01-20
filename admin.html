@@ -1,132 +1,370 @@
+/* 管理画面スタイル */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>ポーカートーナメント管理画面</title>
-  <link rel="stylesheet" href="css/admin.css" />
-</head>
-<body>
-  <div class="admin-container">
-    <header class="admin-header">
-      <h1>トーナメント管理画面</h1>
-    </header>
+body {
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic Pro', 'メイリオ', Meiryo, 'ＭＳ Ｐゴシック', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #333;
+    min-height: 100vh;
+}
 
-    <main class="admin-main">
-      <!-- 基本情報 -->
-      <section class="basic-settings">
-        <h2>基本情報</h2>
-        <div class="form-group">
-          <label for="tournament-name-input">トーナメント名:</label>
-          <input type="text" id="tournament-name-input" placeholder="トーナメント名を入力" />
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="current-players-input">現在参加人数:</label>
-            <input type="number" id="current-players-input" min="0" value="0" />
-          </div>
-          <div class="form-group">
-            <label for="total-entries-input">受付人数（エントリー+リエントリー）:</label>
-            <input type="number" id="total-entries-input" min="0" value="0" />
-          </div>
-          <div class="form-group">
-            <label for="initial-stack-input">初期スタック:</label>
-            <input type="number" id="initial-stack-input" min="0" value="10000" />
-          </div>
-        </div>
-      </section>
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
-      <!-- プライズプール -->
-      <section class="prize-pool-section">
-        <h2>プライズプール</h2>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="entry-fee-input">参加費（円）:</label>
-            <input type="number" id="entry-fee-input" min="0" value="0" />
-          </div>
-          <div class="form-group">
-            <label>プライズプール:</label>
-            <div id="prize-pool-display" class="prize-pool-display">0円</div>
-          </div>
-        </div>
-      </section>
+.admin-header {
+    text-align: center;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
 
-      <!-- タイマー管理 -->
-      <section class="timer-management">
-        <h2>タイマー管理</h2>
+.admin-header h1 {
+    color: #4A5568;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
 
-        <div class="timer-selector">
-          <label for="timer-select">使用するタイマー:</label>
-          <select id="timer-select"></select>
-          <button id="new-timer-btn" class="btn btn-primary">新規タイマー作成</button>
-        </div>
+.admin-main {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
 
-        <div id="timer-details" class="timer-details">
-          <div class="form-group">
-            <label for="timer-name-input">タイマー名:</label>
-            <input type="text" id="timer-name-input" placeholder="タイマー名を入力" />
-          </div>
+section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
 
-          <div class="levels-container">
-            <h3>レベル設定</h3>
-            <div id="levels-list" class="levels-list"></div>
-            <button id="add-level-btn" class="btn btn-secondary">レベル追加</button>
-          </div>
+section h2 {
+    color: #2D3748;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #667eea;
+}
 
-          <div class="breaks-container">
-            <h3>ブレイク設定</h3>
+section h3 {
+    color: #4A5568;
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+}
 
-            <!-- ★ ブレイク追加UI -->
-            <div class="form-row" style="margin-bottom:10px;">
-              <div class="form-group">
-                <label for="break-level-select">どのレベルの「後」にブレイク:</label>
-                <select id="break-level-select"></select>
-              </div>
-              <div class="form-group">
-                <label for="break-duration-input">休憩時間（分）:</label>
-                <input type="number" id="break-duration-input" min="1" value="10" />
-              </div>
-              <div class="form-group" style="align-self:flex-end;">
-                <button id="add-break-btn" class="btn btn-secondary">ブレイク追加</button>
-              </div>
-            </div>
+/* フォーム要素 */
+.form-group {
+    margin-bottom: 20px;
+}
 
-            <div id="breaks-list" class="breaks-list"></div>
-          </div>
-        </div>
-      </section>
+.form-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
 
-      <!-- プライズ設定 -->
-      <section class="prize-settings">
-        <h2>プライズ設定</h2>
-        <div id="prize-list-admin" class="prize-list-admin"></div>
-        <button id="add-prize-btn" class="btn btn-secondary">プライズ追加</button>
-      </section>
+.form-row .form-group {
+    flex: 1;
+    min-width: 200px;
+}
 
-      <!-- コントロール -->
-      <section class="control-section">
-        <div class="timer-controls">
-          <button id="prev-level-btn" class="btn btn-secondary">前のレベル</button>
-          <button id="start-stop-btn" class="btn btn-primary">スタート</button>
-          <button id="next-level-btn" class="btn btn-secondary">次のレベル</button>
-          <button id="break-cut-btn" class="btn btn-warning">ブレイクカット</button>
-        </div>
-        <button id="update-btn" class="btn btn-success btn-large">更新</button>
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2D3748;
+}
 
-        <div class="admin-controls">
-          <button id="save-btn" class="btn btn-info">保存</button>
-          <button id="reset-timer-btn" class="btn btn-warning">タイマーリセット</button>
-          <!-- ★ 全データ初期化 -->
-          <button id="wipe-data-btn" class="btn btn-danger">全データ初期化</button>
-        </div>
-      </section>
-    </main>
-  </div>
-  
+input[type="text"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
 
-  <script src="js/timer.js" defer></script>
-  <script src="js/admin.js" defer></script>
-</body>
-</html>
-``
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ボタン */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #718096, #4A5568);
+    color: white;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(113, 128, 150, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #48BB78, #38A169);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ED8936, #DD6B20);
+    color: white;
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #4299E1, #3182CE);
+    color: white;
+}
+
+.btn-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #F56565, #E53E3E);
+    color: white;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+}
+
+/* タイマー管理 */
+.timer-selector {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    margin-bottom: 20px;
+}
+
+.timer-selector select {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.levels-container,
+.breaks-container {
+    margin-top: 25px;
+}
+
+.levels-list,
+.breaks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.level-item,
+.break-item {
+    background: #F7FAFC;
+    border: 2px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.level-item:hover,
+.break-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.level-header,
+.break-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.level-header span,
+.break-header span {
+    font-weight: bold;
+    color: #2D3748;
+    font-size: 1.2rem;
+}
+
+.level-inputs,
+.break-inputs {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.level-inputs label,
+.break-inputs label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.level-inputs input,
+.break-inputs input {
+    width: 80px;
+    margin-bottom: 0;
+}
+
+/* プライズ */
+.prize-list-admin {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.prize-item-admin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #F7FAFC;
+    border: 2px solid #E2E8F0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.prize-item-admin:hover {
+    border-color: #667eea;
+}
+
+.prize-pool-display {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #48BB78;
+    background: #F0FFF4;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #48BB78;
+    text-align: center;
+}
+
+/* コントロールセクション */
+.control-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.timer-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.timer-controls .btn {
+    min-width: 120px;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+}
+
+.btn-large {
+    padding: 20px 40px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.admin-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#break-cut-btn {
+    background: linear-gradient(135deg, #D69E2E, #B7791F);
+}
+
+#break-cut-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(214, 158, 46, 0.4);
+}
+
+#break-cut-btn:disabled {
+    background: #718096;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+    .admin-header h1 {
+        font-size: 2rem;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .timer-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .level-inputs,
+    .break-inputs {
+        flex-direction: column;
+    }
+    
+    .control-section {
+        flex-direction: column;
+    }
+    
+    .control-section .btn {
+        width: 100%;
+    }
+}
